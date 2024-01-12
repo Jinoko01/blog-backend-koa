@@ -28,6 +28,12 @@ exports.register = async (ctx) => {
     await user.save();
 
     ctx.body = user.serialize();
+
+    const token = user.generateToken();
+    ctx.cookies.set('access_token', token, {
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+      httpOnly: true,
+    });
   } catch (e) {
     ctx.throw(500, e);
   }
@@ -53,15 +59,26 @@ exports.login = async (ctx) => {
       return;
     }
     ctx.body = user.serialize();
+    const token = user.generateToken();
+    ctx.cookies.set('access_token', token, {
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+      httpOnly: true,
+    });
   } catch (e) {
     ctx.throw(500, e);
   }
 };
 
 exports.check = async (ctx) => {
-  // 로그인 중
+  const { user } = ctx.state;
+  if (!user) {
+    ctx.status = 401;
+    return;
+  }
+  ctx.body = user;
 };
 
 exports.logout = async (ctx) => {
-  // 로그아웃
+  ctx.cookies.set('access_token');
+  ctx.status = 204;
 };
